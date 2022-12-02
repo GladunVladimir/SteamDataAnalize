@@ -14,6 +14,7 @@ import warnings
 plt.style.use('default')
 plt.rcdefaults()
 
+curr_dir = os.getcwd()
 
 def calc_rating(row):
     """Calculate rating score based on SteamDB method."""
@@ -89,7 +90,7 @@ def process_cat_gen_tag(df):
         'Simulation',
         # 'Software Training',
         'Sports',
-        'Strategy'
+        'strategy'
         # 'Tutorial',
         # 'Utilities',
         # 'Video Production',
@@ -126,7 +127,7 @@ def process_cat_gen_tag(df):
 
 def pre_process():
     """Preprocess Steam dataset for exploratory analysis."""
-    df = pd.read_csv(os.getcwd() + '/data/steam_+_spy_clean.csv')
+    df = pd.read_csv(curr_dir + '/data/steam_+_spy_clean.csv')
 
     # keep windows only, and remove platforms column
     df = df[df['platforms'].str.contains('windows')].drop('platforms', axis=1).copy()
@@ -152,6 +153,8 @@ def pre_process():
 data = pre_process()
 
 
+
+
 warnings.filterwarnings('ignore')
 
 # Create a column to split free vs paid games
@@ -171,6 +174,10 @@ eda_df = pd.DataFrame(zip(df['rating'],
                       columns=['Rating Score', 'Total Ratings (log)', 'Owners (log)', 'Release Year', 'Current Price', 'Type'])
 
 sns.pairplot(eda_df, hue='Type')
+
+if not os.path.isdir('plot'):
+    os.mkdir(curr_dir + '/plot/')
+plt.savefig(curr_dir + '/plot/PaidAndFree.png')
 plt.show()
 
 df = data.copy()
@@ -205,6 +212,10 @@ ax.set_xlabel('')
 ax.set_ylabel('Number of Releases')
 ax.set_title('Number of releases by year, broken down by number of owners')
 sns.despine()
+
+if not os.path.isdir('plot'):
+    os.mkdir(curr_dir + '/plot/')
+plt.savefig(curr_dir + '/plot/NumberOfReleases.png')
 plt.show()
 
 
@@ -231,37 +242,46 @@ ax.set_title('Frequency of categories and genres in top ten games')
 plt.show()
 
 
+def plot_owners_comparison(df):
+    gen_cols = ['action',
+                'adventure',
+                'casual',
+                'indie',
+                'massively_multiplayer',
+                'rpg',
+                'racing',
+                'simulation',
+                'sports',
+                'strategy']
+
+    # percentage of games in each genre
+    total_owners_per_genre = df[gen_cols].multiply(df['owners'], axis='index').sum()
+    average_owners_per_genre = total_owners_per_genre / df[gen_cols].sum()
+
+    fig, ax1 = plt.subplots(figsize=(13, 7))
+
+    color = 'tab:gray'
+    (df[gen_cols].mean() * 100).sort_index(ascending=False).plot.barh(ax=ax1, color=color, alpha=.9, position=1,
+                                                                      fontsize=14, width=0.4)
+    # ax1.set_ylabel('genre')
+
+    ax1.set_xlabel('% of games (creation popularity)', color=color, size=12)
+    ax1.tick_params(axis='x', labelcolor=color)
+    ax1.tick_params(axis='y', left='off', top='off')
+    # ax1.axes.get_yaxis().set_visible(False)
+
+    ax2 = ax1.twiny()
+
+    color = 'tab:red'
+    average_owners_per_genre.sort_index(ascending=False).plot.barh(ax=ax2, color=color, alpha=1, position=0,
+                                                                   fontsize=14, width=0.4)
+    ax2.set_xlabel('Average owners per game (consumer popularity)', color=color, size=12)
+    ax2.tick_params(axis='x', labelcolor=color)
+    ax2.axes.get_yaxis().set_visible(False)
+    ax2.set_ylim([-.5, 9.5])
+
+    plt.tight_layout()
+    plt.show()
 
 
-# def plot_owners_comparison(df):
-#     # percentage of games in each genre
-#     total_owners_per_genre = df[gen_cols].multiply(df['owners'], axis='index').sum()
-#     average_owners_per_genre = total_owners_per_genre / df[gen_cols].sum()
-#
-#     fig, ax1 = plt.subplots(figsize=(13, 7))
-#
-#     color = 'tab:gray'
-#     (df[gen_cols].mean() * 100).sort_index(ascending=False).plot.barh(ax=ax1, color=color, alpha=.9, position=1,
-#                                                                       fontsize=14, width=0.4)
-#     # ax1.set_ylabel('genre')
-#
-#     ax1.set_xlabel('% of games (creation popularity)', color=color, size=12)
-#     ax1.tick_params(axis='x', labelcolor=color)
-#     ax1.tick_params(axis='y', left='off', top='off')
-#     # ax1.axes.get_yaxis().set_visible(False)
-#
-#     ax2 = ax1.twiny()
-#
-#     color = 'tab:red'
-#     average_owners_per_genre.sort_index(ascending=False).plot.barh(ax=ax2, color=color, alpha=1, position=0,
-#                                                                    fontsize=14, width=0.4)
-#     ax2.set_xlabel('Average owners per game (consumer popularity)', color=color, size=12)
-#     ax2.tick_params(axis='x', labelcolor=color)
-#     ax2.axes.get_yaxis().set_visible(False)
-#     ax2.set_ylim([-.5, 9.5])
-#
-#     plt.tight_layout()
-#     plt.show()
-#
-#
-# plot_owners_comparison(df)
+plot_owners_comparison(df[df.owners <= 10000000])
