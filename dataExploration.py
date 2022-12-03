@@ -238,7 +238,8 @@ ax.text(0.5, 9.1, 'Categories', fontsize=11, color='tab:blue', alpha=.8, horizon
 ax.set_ylim([0, 9.5])
 ax.set_ylabel('Count')
 ax.set_title('Frequency of categories and genres in top ten games')
-
+plt.tight_layout()
+plt.savefig(curr_dir + '/plot/FreqTop.png')
 plt.show()
 
 gen_cols = ['action',
@@ -282,6 +283,7 @@ def plot_owners_comparison(df):
     ax2.set_ylim([-.5, 9.5])
 
     plt.tight_layout()
+    plt.savefig(curr_dir + '/plot/Owners.png')
     plt.show()
 
 
@@ -297,19 +299,29 @@ for col in gen_cols:
 
 recent_df = g_df[g_df['release_year'] >= 2022].copy()
 ax = sns.stripplot(x='price', y='genre', data=recent_df, jitter=True, alpha=.5, linewidth=1)
-
+plt.tight_layout()
+plt.savefig(curr_dir + '/plot/Price.png')
 plt.show()
 
 
-df[df.publisher == 'Ubisoft'][gen_cols].mean().plot.bar(color='purple')
+df[df.publisher == 'Ubisoft'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:red')
+
 plt.title('Proportion of games released by Ubisoft in each genre')
+plt.tight_layout()
+plt.savefig(curr_dir + '/plot/Ubisoft.png')
 plt.show()
 
 
-df[df.publisher == 'Valve'][gen_cols].mean().plot.bar(figsize=(5,3), color='tab:orange')
+df[df.publisher == 'Valve'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:orange')
+
 plt.title('Proportion of games released by Valve in each genre')
+plt.tight_layout()
+plt.savefig(curr_dir + '/plot/Valve.png')
 plt.show()
 
-df[df.publisher == 'SEGA'][gen_cols].mean().plot.bar(figsize=(10,5), color='tab:red')
+df[df.publisher == 'SEGA'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:red')
+
 plt.title('Proportion of games released by SEGA in each genre')
+plt.tight_layout()
+plt.savefig(curr_dir + '/plot/SEGA.png')
 plt.show()
