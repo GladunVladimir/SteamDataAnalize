@@ -149,8 +149,6 @@ def pre_process():
 data = pre_process()
 
 
-
-
 warnings.filterwarnings('ignore')
 
 # Create a column to split free vs paid games
@@ -169,7 +167,7 @@ eda_df = pd.DataFrame(zip(df['rating'],
                          ),
                       columns=['Rating Score', 'Total Ratings (log)', 'Owners (log)', 'Release Year', 'Current Price', 'Type'])
 
-sns.pairplot(eda_df, hue='Type')
+sns.pairplot(eda_df, hue='Type', palette=['blue', 'gray'])
 
 if not os.path.isdir('plot'):
     os.mkdir(curr_dir + '/plot/')
@@ -184,7 +182,7 @@ gt_20k = []
 
 for year in sorted(df['release_year'].unique()):
     if year < 2006 or year > 2022:
-        # very few releases in data prior to 2006, and we're still in 2019 (at time of writing)
+        # very few releases in data prior to 2006, and we're still in 2022 (at time of writing)
         # so ignore these years
         continue
 
@@ -202,27 +200,19 @@ for year in sorted(df['release_year'].unique()):
 owners_df = pd.DataFrame(zip(years, lt_20k, gt_20k),
                          columns=['year', 'Under 20,000 Owners', '20,000+ Owners'])
 
-ax = owners_df.plot(x='year', y=[1, 2], kind='bar', stacked=True, color=['tab:red', 'gray'])
+ax = owners_df.plot(x='year', y=[1, 2], kind='bar', stacked=True, color=['tab:blue', 'gray'])
 
 ax.set_xlabel('')
 ax.set_ylabel('Number of Releases')
 ax.set_title('Number of releases by year, broken down by number of owners')
 sns.despine()
 
-if not os.path.isdir('plot'):
-    os.mkdir(curr_dir + '/plot/')
 plt.savefig(curr_dir + '/plot/NumberOfReleases.png')
 plt.show()
 
 
 
-
-
-
-display_cols = ['name', 'developer', 'publisher', 'release_year', 'genres', 'average_playtime', 'owners', 'rating', 'price']
 top_ten = df.sort_values(by='rating', ascending=False).head(10)
-
-#display(top_ten[display_cols])
 
 # storing category and genre columns in a variable, as we'll be accessing them often
 cat_gen_cols = df.columns[-13:-1]
@@ -234,6 +224,8 @@ ax.text(0.5, 9.1, 'Categories', fontsize=11, color='tab:blue', alpha=.8, horizon
 ax.set_ylim([0, 9.5])
 ax.set_ylabel('Count')
 ax.set_title('Frequency of categories and genres in top ten games')
+
+
 plt.tight_layout()
 plt.savefig(curr_dir + '/plot/FreqTop.png')
 plt.show()
@@ -270,7 +262,7 @@ def plot_owners_comparison(df):
 
     ax2 = ax1.twiny()
 
-    color = 'tab:red'
+    color = 'tab:blue'
     average_owners_per_genre.sort_index(ascending=False).plot.barh(ax=ax2, color=color, alpha=1, position=0,
                                                                    fontsize=14, width=0.4)
     ax2.set_xlabel('Average owners per game (consumer popularity)', color=color, size=12)
@@ -294,30 +286,30 @@ for col in gen_cols:
 
 
 recent_df = g_df[g_df['release_year'] >= 2022].copy()
-ax = sns.stripplot(x='price', y='genre', data=recent_df, jitter=True, alpha=.5, linewidth=1)
+ax = sns.stripplot(x='price', y='genre', data=recent_df, jitter=True, alpha=.5, linewidth=1, palette=['red'])
 plt.tight_layout()
 plt.savefig(curr_dir + '/plot/Price.png')
 plt.show()
 
 
-df[df.publisher == 'Ubisoft'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:red')
-
+df[df.publisher == 'Ubisoft'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:blue')
 plt.title('Proportion of games released by Ubisoft in each genre')
 plt.tight_layout()
 plt.savefig(curr_dir + '/plot/Ubisoft.png')
 plt.show()
 
 
-df[df.publisher == 'Valve'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:orange')
-
-plt.title('Proportion of games released by Valve in each genre')
-plt.tight_layout()
-plt.savefig(curr_dir + '/plot/Valve.png')
-plt.show()
-
-df[df.publisher == 'SEGA'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:red')
-
+df[df.publisher == 'SEGA'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:blue')
 plt.title('Proportion of games released by SEGA in each genre')
 plt.tight_layout()
 plt.savefig(curr_dir + '/plot/SEGA.png')
 plt.show()
+
+
+df[df.publisher == 'Electronic Arts'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:blue')
+plt.title('Proportion of games released by Electronic Arts in each genre')
+plt.tight_layout()
+plt.savefig(curr_dir + '/plot/Electronic_Arts.png')
+plt.show()
+
+
