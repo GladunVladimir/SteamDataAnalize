@@ -241,18 +241,19 @@ ax.set_title('Frequency of categories and genres in top ten games')
 
 plt.show()
 
+gen_cols = ['action',
+            'adventure',
+            'casual',
+            'indie',
+            'massively_multiplayer',
+            'rpg',
+            'racing',
+            'simulation',
+            'sports',
+            'strategy']
 
 def plot_owners_comparison(df):
-    gen_cols = ['action',
-                'adventure',
-                'casual',
-                'indie',
-                'massively_multiplayer',
-                'rpg',
-                'racing',
-                'simulation',
-                'sports',
-                'strategy']
+
 
     # percentage of games in each genre
     total_owners_per_genre = df[gen_cols].multiply(df['owners'], axis='index').sum()
@@ -285,3 +286,30 @@ def plot_owners_comparison(df):
 
 
 plot_owners_comparison(df[df.owners <= 10000000])
+
+g_df = pd.DataFrame()
+
+for col in gen_cols:
+    temp_df = df[df[col] == 1].copy()
+    temp_df['genre'] = col
+    g_df = pd.concat([g_df, temp_df], axis=0)
+
+
+recent_df = g_df[g_df['release_year'] >= 2022].copy()
+ax = sns.stripplot(x='price', y='genre', data=recent_df, jitter=True, alpha=.5, linewidth=1)
+
+plt.show()
+
+
+df[df.publisher == 'Ubisoft'][gen_cols].mean().plot.bar(color='purple')
+plt.title('Proportion of games released by Ubisoft in each genre')
+plt.show()
+
+
+df[df.publisher == 'Valve'][gen_cols].mean().plot.bar(figsize=(5,3), color='tab:orange')
+plt.title('Proportion of games released by Valve in each genre')
+plt.show()
+
+df[df.publisher == 'SEGA'][gen_cols].mean().plot.bar(figsize=(10,5), color='tab:red')
+plt.title('Proportion of games released by SEGA in each genre')
+plt.show()
