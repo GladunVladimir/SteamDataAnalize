@@ -1,4 +1,3 @@
-# standard library imports
 import csv
 import datetime as dt
 import json
@@ -6,11 +5,8 @@ import os
 import statistics
 import time
 import re
-
-# third-party imports
 from ast import literal_eval
 from ssl import SSLError
-
 import numpy as np
 import pandas as pd
 import requests

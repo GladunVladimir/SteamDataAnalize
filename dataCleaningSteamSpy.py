@@ -1,11 +1,8 @@
-# standard library imports
 import os
 from ast import literal_eval
 import itertools
 import time
 import re
-
-# third-party imports
 import numpy as np
 import pandas as pd
 

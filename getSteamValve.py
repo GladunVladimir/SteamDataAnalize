@@ -1,4 +1,3 @@
-# standard library imports
 import csv
 import datetime as dt
 import glob
@@ -7,11 +6,7 @@ import os
 import statistics
 import time
 from pathlib import Path
-
-
-# third-party imports
 from ssl import SSLError
-
 import numpy as np
 import pandas as pd
 import requests
