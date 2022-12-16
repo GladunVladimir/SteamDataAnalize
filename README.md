@@ -1,5 +1,5 @@
 # SteamDataAnalize
-#How to use
+## How to use
 
 - run getSteamSpy
 
@@ -25,7 +25,7 @@ python3 dataCleaningSteamSpy.py
 python3 dataCleaningSteamValve.py
 ```
 
-#After all, it will be able to make figures
+## After all, it will be able to make figures
 
 You should run dataExploration
 
