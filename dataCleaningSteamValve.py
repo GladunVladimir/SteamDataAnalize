@@ -1,6 +1,7 @@
 import csv
 import datetime as dt
 import json
+import logging
 import os
 import statistics
 import time
@@ -14,14 +15,7 @@ import requests
 
 from getSteamValve import *
 
-
 app_list_valve = getSteamValveFilesCSV(steam_columns)
-
-
-
-app_list_valve.drop('Unnamed: 0.1', inplace=True, axis=1)
-app_list_valve.drop('Unnamed: 0', inplace=True, axis=1)
-
 
 # print(app_list_valve.iloc[0])
 
@@ -30,9 +24,11 @@ print('Columns:', app_list_valve.shape[1])
 
 
 def drop_null_cols(df, thresh=0.5):
+    df.drop('Unnamed: 0.1', inplace=True, axis=1)
+    df.drop('Unnamed: 0', inplace=True, axis=1)
+    df.drop(index=df.index[0], axis=0, inplace=True)
     """Drop columns with more than a certain proportion of missing values (Default 50%)."""
     cutoff_count = len(df) * thresh
-
     return df.dropna(thresh=cutoff_count, axis=1)
 
 
@@ -67,13 +63,14 @@ def process(df):
 
 
 def process_age(df):
-    """Format ratings in age column to be in line with the PEGI Age Ratings system."""
+    """приведение данных по возрасту к формату PEGI"""
     # PEGI Age ratings: 3, 7, 12, 16, 18
     cut_points = [-1, 0, 3, 7, 12, 16, 2000]
     label_values = [0, 3, 7, 12, 16, 18]
     df['required_age'] = df['required_age'].replace(['18+'], '18')
     df['required_age'] = df['required_age'].replace(['21+'], '21')
 
+    print(df['required_age'])
     df['required_age'] = pd.to_numeric(df['required_age'])
 
     df['required_age'] = pd.cut(df['required_age'], bins=cut_points, labels=label_values)
@@ -95,6 +92,7 @@ def process_platforms(df):
 
     return df
 
+
 # not_free_and_null_price = platforms_df[(platforms_df['is_free'] == False) & (platforms_df['price_overview'].isnull())]
 
 def print_steam_links(df):
@@ -109,8 +107,8 @@ def print_steam_links(df):
 
 
 class RealTimeCurrencyConverter():
-    def __init__(self,url):
-        self.data= requests.get(url).json()
+    def __init__(self, url):
+        self.data = requests.get(url).json()
         self.currencies = self.data['rates']
 
     def convert(self, from_currency, to_currency, amount):
@@ -145,17 +143,17 @@ def process_price(df):
     df['price'] = df['price_overview'].apply(lambda x: x['initial'])
 
     # set price of free games to 0
-    df.loc[df['is_free'], 'price'] = 0
+    # df.loc[df['is_free'], 'price'] = 0
 
     # remove non-TRY rows
     df = df[df['currency'] == 'TRY']
 
     # remove rows where price is -1
     df = df[df['price'] != -1]
-
+    # Correct
     # change price to display in pounds (can apply to all now -1 rows removed)
     df.loc[df['price'] > 0, 'price'] /= 100
-    df.loc[df['price'] > 0, 'price'] = converter.convert('TRY','USD', df.loc[df['price'] > 0, 'price'])
+    df.loc[df['price'] > 0, 'price'] = converter.convert('TRY', 'USD', df.loc[df['price'] > 0, 'price'])
 
     # remove columns no longer needed
     df = df.drop(['is_free', 'currency', 'price_overview', 'packages', 'package_groups'], axis=1)
@@ -164,10 +162,10 @@ def process_price(df):
 
 
 def process_language(df):
-    """Process supported_languages column into a boolean 'is english' column."""
+    """Форматирование данных о доступных языках"""
     df = df.copy()
 
-    # drop rows with missing language data
+    # удалить строки с отсутствующими языковыми данными
     df = df.dropna(subset=['supported_languages'])
 
     df['english'] = df['supported_languages'].apply(lambda x: 1 if 'english' in x.lower() else 0)
@@ -178,13 +176,13 @@ def process_language(df):
 
 
 def process_developers_and_publishers(df):
-    """Parse columns as semicolon-separated string."""
-    # remove rows with missing data (~ means not)
+    """Форматировование данных об разработчиках и публицистов"""
+    # удалить строки с отсутствующими данными (~ означает, что нет)
     df = df[(df['developers'].notnull()) & (df['publishers'] != "['']")].copy()
     df = df[~(df['developers'].str.contains(';')) & ~(df['publishers'].str.contains(';'))]
     df = df[(df['publishers'] != "['NA']") & (df['publishers'] != "['N/A']")]
 
-    # create list for each
+    # создать список для каждого
     df['developer'] = df['developers'].apply(lambda x: ';'.join(literal_eval(x)))
     df['publisher'] = df['publishers'].apply(lambda x: ';'.join(literal_eval(x)))
 
@@ -204,17 +202,17 @@ def process_categories_and_genres(df):
 
 
 def process_achievements_and_descriptors(df):
-    """Parse as total number of achievements."""
+    """Разбираем как общее количество достижений."""
     df = df.copy()
 
     df = df.drop('content_descriptors', axis=1)
 
     def parse_achievements(x):
         if x is np.nan:
-            # missing data, assume has no achievements
+            # отсутствуют данные, предположим, что у него нет достижений
             return 0
         else:
-            # else has data, so can extract and return number under total
+            # имеет данные, поэтому можем извлекать и возвращать число под итогом
             return literal_eval(x)['total']
 
     df['achievements'] = df['achievements'].apply(parse_achievements)
@@ -308,7 +306,7 @@ def process_info(df, export=False):
 
         # only keep rows with at least one piece of information
         support_info = support_info[(support_info['website'].notnull()) | (support_info['support_url'] != '') | (
-                    support_info['support_email'] != '')]
+                support_info['support_email'] != '')]
 
         export_data(support_info, 'support_info')
 
@@ -409,12 +407,22 @@ def process(df):
 
     return df
 
+
+def upload_for_test():
+    app_list_valve = getSteamValveFilesCSV(steam_columns)
+    df = process(app_list_valve)
+    return df
+
+
 steam_data = process(app_list_valve)
+
+
+print(steam_data['genres'].unique())
+
 print(steam_data.isnull().sum())
 
-print(app_list_valve.info(verbose=False, memory_usage="deep"))
+print(app_list_valve.info(verbose=True, memory_usage="deep"))
 
-
-print(steam_data.info(verbose=False, memory_usage="deep"))
+print(steam_data.info(verbose=True, memory_usage="deep"))
 
 steam_data.to_csv(os.getcwd() + '/data/exports/steam_data_clean.csv', index=False)

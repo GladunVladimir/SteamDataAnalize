@@ -12,6 +12,9 @@ plt.rcdefaults()
 
 curr_dir = os.getcwd()
 
+df_requirements = pd.read_csv(curr_dir + '/data/exports/steam_requirements_data.csv')
+
+
 def calc_rating(row):
     """Calculate rating score based on SteamDB method."""
     import math
@@ -23,7 +26,7 @@ def calc_rating(row):
     if total_reviews != 0:
         average = pos / total_reviews
 
-        # pulls score towards 50, pulls more strongly for games with few reviews
+        #pulls score towards 50, pulls more strongly for games with few reviews
         score = average - (average * 0.5) * 2 ** (-math.log10(total_reviews + 1))
 
         return score * 100
@@ -148,7 +151,6 @@ def pre_process():
 
 data = pre_process()
 
-
 warnings.filterwarnings('ignore')
 
 # Create a column to split free vs paid games
@@ -158,14 +160,22 @@ data.loc[data['price'] > 0, 'type'] = 'Paid'
 # ensure no 0s in columns we're applying log to
 df = data[(data['owners'] > 0) & (data['total_ratings'] > 0)].copy()
 
-eda_df = pd.DataFrame(zip(df['rating'],
-                          np.log10(df['total_ratings']),
-                          np.log10(df['owners']),
-                          df['release_year'],
-                          df.price,
-                          df['type']
-                         ),
-                      columns=['Rating Score', 'Total Ratings (log)', 'Owners (log)', 'Release Year', 'Current Price', 'Type'])
+eda_df = pd.DataFrame(zip(
+    # df['rating'],
+    # np.log10(df['total_ratings']),
+    # np.log10(df['owners']),
+    df.price,
+    df['release_year'],
+    df['type'],
+),
+    columns=[
+        # 'Rating Score',
+        # 'Total Ratings (log)',
+        # 'Owners (log)',
+        'Current Price',
+        'Release Year',
+        'Type'
+    ])
 
 sns.pairplot(eda_df, hue='Type', palette=['blue', 'gray'])
 
@@ -210,13 +220,11 @@ sns.despine()
 plt.savefig(curr_dir + '/plot/NumberOfReleases.png')
 plt.show()
 
-
-
 top_ten = df.sort_values(by='rating', ascending=False).head(10)
 
 # storing category and genre columns in a variable, as we'll be accessing them often
 cat_gen_cols = df.columns[-13:-1]
-ax = top_ten[cat_gen_cols].sum().plot.bar(figsize=(8,5))
+ax = top_ten[cat_gen_cols].sum().plot.bar(figsize=(8, 5))
 
 ax.fill_between([-.5, 1.5], 10, alpha=.2)
 ax.text(0.5, 9.1, 'Categories', fontsize=11, color='tab:blue', alpha=.8, horizontalalignment='center')
@@ -224,7 +232,6 @@ ax.text(0.5, 9.1, 'Categories', fontsize=11, color='tab:blue', alpha=.8, horizon
 ax.set_ylim([0, 9.5])
 ax.set_ylabel('Count')
 ax.set_title('Frequency of categories and genres in top ten games')
-
 
 plt.tight_layout()
 plt.savefig(curr_dir + '/plot/FreqTop.png')
@@ -241,9 +248,8 @@ gen_cols = ['action',
             'sports',
             'strategy']
 
+
 def plot_owners_comparison(df):
-
-
     # percentage of games in each genre
     total_owners_per_genre = df[gen_cols].multiply(df['owners'], axis='index').sum()
     average_owners_per_genre = total_owners_per_genre / df[gen_cols].sum()
@@ -284,32 +290,58 @@ for col in gen_cols:
     temp_df['genre'] = col
     g_df = pd.concat([g_df, temp_df], axis=0)
 
-
 recent_df = g_df[g_df['release_year'] >= 2022].copy()
 ax = sns.stripplot(x='price', y='genre', data=recent_df, jitter=True, alpha=.5, linewidth=1, palette=['red'])
 plt.tight_layout()
 plt.savefig(curr_dir + '/plot/Price.png')
 plt.show()
 
-
-df[df.publisher == 'Ubisoft'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:blue')
+df[df.publisher == 'Ubisoft'][gen_cols].mean().plot.bar(figsize=(10, 8), color='tab:blue')
 plt.title('Proportion of games released by Ubisoft in each genre')
 plt.tight_layout()
 plt.savefig(curr_dir + '/plot/Ubisoft.png')
 plt.show()
 
-
-df[df.publisher == 'SEGA'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:blue')
+df[df.publisher == 'SEGA'][gen_cols].mean().plot.bar(figsize=(10, 8), color='tab:blue')
 plt.title('Proportion of games released by SEGA in each genre')
 plt.tight_layout()
 plt.savefig(curr_dir + '/plot/SEGA.png')
 plt.show()
 
-
-df[df.publisher == 'Electronic Arts'][gen_cols].mean().plot.bar(figsize=(10,8), color='tab:blue')
+df[df.publisher == 'Electronic Arts'][gen_cols].mean().plot.bar(figsize=(10, 8), color='tab:blue')
 plt.title('Proportion of games released by Electronic Arts in each genre')
 plt.tight_layout()
 plt.savefig(curr_dir + '/plot/Electronic_Arts.png')
 plt.show()
 
+# print(df_requirements['mac_requirements'].where(df_requirements['mac_requirements'] == '[]').sum())
 
+fig = plt.figure(figsize=(10, 6))
+
+dfa = data[data.owners >= 20000].copy()
+dfa['subset'] = '20,000+ Owners'
+
+dfb = data.copy()
+dfb['subset'] = 'All Data'
+
+ax = sns.boxplot(x='subset', y='rating', hue='type', data=pd.concat([dfa, dfb]))
+
+ax.set(xlabel='', ylabel='Rating (%)')
+plt.show()
+
+# paid with over 20,000 owners
+df = data[(data.owners >= 20000) & (data.price > 0)].copy()
+
+fig, axarr = plt.subplots(1, 2, figsize=(10, 5))
+
+df.rating.plot.hist(range=(0, 100), bins=10, ax=axarr[0], alpha=.8)
+# sns.distplot(df.rating, bins=range(0,100,10), ax=axarr[0])
+
+# plot line for mean on histogram
+mean = df.rating.mean()
+axarr[0].axvline(mean, c='black', alpha=.6)
+axarr[0].text(mean - 1, 1600, f'Mean: {mean:.0f}%', c='black', ha='right', alpha=.8)
+
+ax = sns.boxplot(x='rating', data=df, orient='v', ax=axarr[1])
+fig.suptitle('Distribution of rating scores for paid games with 20,000+ owners')
+plt.show()

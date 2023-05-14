@@ -6,7 +6,6 @@ import pandas as pd
 from pathlib import Path
 import os
 import glob
-import steamspypi
 
 
 def get_cooldown():
@@ -39,11 +38,7 @@ def download_a_single_page(page_no):
 
 
 def get_file_name(page_no):
-
-
     file_name = "steamspy_page_{}.csv".format(page_no)
-
-
     return file_name
 
 

@@ -31,8 +31,8 @@ def process(df):
         'median_2weeks', 'price', 'initialprice', 'discount', 'ccu'
     ], axis=1)
 
-    # reformat owners column
-    df['owners'] = df['owners'].str.replace(',', '').str.replace(' .. ', '-')
+    # # reformat owners column
+    # df['owners'] = df['owners'].str.replace(',', '').str.replace(' .. ', '-')
 
     return df
 
